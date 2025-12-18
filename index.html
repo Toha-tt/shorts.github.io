@@ -3,92 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Producer Control</title>
+    <title>AI Producer</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --tg-theme-bg-color: #1e1e1e; --tg-theme-button-color: #fca311; --tg-theme-text-color: #fff; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); padding: 20px; }
+        body { font-family: sans-serif; background-color: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); padding: 20px; }
         .card { background: #2d2d2d; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; color: #ccc; }
-        input[type="text"], textarea, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #1a1a1a; color: white; box-sizing: border-box; }
-        .btn { width: 100%; padding: 16px; background-color: var(--tg-theme-button-color); color: #000; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 10px; }
+        input, textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #444; background: #1a1a1a; color: white; box-sizing: border-box; font-size: 16px; }
         
-        /* Стилі для перемикача режимів */
-        .mode-switch { display: flex; gap: 10px; margin-bottom: 15px; }
-        .mode-btn { flex: 1; padding: 10px; background: #333; border: 1px solid #444; color: #fff; border-radius: 8px; cursor: pointer; text-align: center; }
-        .mode-btn.active { background: var(--tg-theme-button-color); color: #000; border-color: var(--tg-theme-button-color); }
+        /* Кнопки перемикання */
+        .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab { flex: 1; padding: 10px; background: #333; text-align: center; border-radius: 8px; cursor: pointer; border: 1px solid #444; transition: 0.2s; }
+        .tab.active { background: var(--tg-theme-button-color); color: black; font-weight: bold; border-color: var(--tg-theme-button-color); }
         .hidden { display: none; }
+        
+        /* Стилі для лічильника */
+        .counter-wrapper { display: flex; gap: 10px; align-items: center; }
+        #countInput { text-align: center; font-weight: bold; font-size: 18px; width: 80px; }
+        .quick-btn { background: #444; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .quick-btn:active { background: #666; }
+
+        .btn { width: 100%; padding: 15px; background: var(--tg-theme-button-color); color: black; font-weight: bold; border: none; border-radius: 12px; font-size: 16px; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <h2 style="text-align:center; color: var(--tg-theme-button-color);">🤖 AI Producer</h2>
-    
-    <div class="mode-switch">
-        <div class="mode-btn active" onclick="setMode('url')">🔗 З YouTube</div>
-        <div class="mode-btn" onclick="setMode('idea')">💡 З Ідеї</div>
+    <h2 style="text-align:center; margin-top:0;">🤖 Пульт Керування</h2>
+
+    <div class="tabs">
+        <div class="tab active" onclick="setMode('url')">🔗 YouTube</div>
+        <div class="tab" onclick="setMode('idea')">💡 Ідея</div>
     </div>
 
     <div class="card">
         <div id="urlBlock">
-            <label>YouTube Посилання:</label>
+            <label>Посилання на відео:</label>
             <input type="text" id="urlInput" placeholder="https://youtube.com/...">
         </div>
-        
         <div id="ideaBlock" class="hidden">
             <label>Опиши ідею:</label>
-            <textarea id="ideaInput" rows="3" placeholder="Наприклад: Топ 5 фактів про космос..."></textarea>
+            <textarea id="ideaInput" rows="3" placeholder="Топ 5 фактів про..."></textarea>
         </div>
     </div>
 
     <div class="card">
-        <label>✂️ Кількість відео:</label>
-        <select id="countSelect">
-            <option value="1">1 Відео</option>
-            <option value="3">3 Відео</option>
-            <option value="6">6 Відео</option>
-        </select>
-    </div>
-
-    <div class="card">
-        <label>📡 Куди постити:</label>
-        <div style="display:flex; gap:10px;">
-            <label><input type="checkbox" id="ch1" checked> Main</label>
-            <label><input type="checkbox" id="ch2" checked> Backup</label>
+        <label>✂️ Кількість шортсів:</label>
+        <div class="counter-wrapper">
+            <input type="number" id="countInput" value="1" min="1" max="50">
+            <button class="quick-btn" onclick="setCount(3)">3</button>
+            <button class="quick-btn" onclick="setCount(5)">5</button>
+            <button class="quick-btn" onclick="setCount(10)">10</button>
         </div>
     </div>
 
-    <button class="btn" onclick="sendData()">🚀 ПОЧАТИ</button>
+    <div class="card">
+        <label>📡 Канали:</label>
+        <div style="display:flex; gap:15px; flex-wrap: wrap;">
+            <label style="display:flex; align-items:center; gap:5px;"><input type="checkbox" id="ch1" checked> Main</label>
+            <label style="display:flex; align-items:center; gap:5px;"><input type="checkbox" id="ch2" checked> Backup</label>
+        </div>
+    </div>
+
+    <button class="btn" onclick="sendData()">🚀 ЗАПУСТИТИ</button>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
-        let currentMode = 'url';
+        let mode = 'url';
 
-        function setMode(mode) {
-            currentMode = mode;
-            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        function setMode(m) {
+            mode = m;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.currentTarget.classList.add('active');
             
             if (mode === 'url') {
                 document.getElementById('urlBlock').classList.remove('hidden');
                 document.getElementById('ideaBlock').classList.add('hidden');
-                document.querySelectorAll('.mode-btn')[0].classList.add('active');
             } else {
                 document.getElementById('urlBlock').classList.add('hidden');
                 document.getElementById('ideaBlock').classList.remove('hidden');
-                document.querySelectorAll('.mode-btn')[1].classList.add('active');
             }
         }
 
+        // Функція для швидких кнопок
+        function setCount(num) {
+            document.getElementById('countInput').value = num;
+        }
+
         function sendData() {
-            let source = currentMode === 'url' ? document.getElementById("urlInput").value : document.getElementById("ideaInput").value;
-            let count = document.getElementById("countSelect").value;
+            let val = mode === 'url' ? document.getElementById("urlInput").value : document.getElementById("ideaInput").value;
+            // Беремо значення з нового input
+            let count = document.getElementById("countInput").value;
             
-            if (!source) { tg.showAlert("❌ Введи дані!"); return; }
+            if (!val) { tg.showAlert("❌ Заповни поле джерела!"); return; }
+            if (count < 1) { tg.showAlert("❌ Мінімум 1 відео!"); return; }
 
             let data = {
                 action: "start_pipeline",
-                mode: currentMode, // Передаємо режим (url або idea)
-                source: source,
+                mode: mode,
+                source: val,
                 count: parseInt(count),
                 channels: [
                     document.getElementById("ch1").checked ? "Main" : null,
