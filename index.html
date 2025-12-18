@@ -6,14 +6,21 @@
     <title>Shorts Generator</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background-color: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); padding: 20px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); padding: 15px; }
         .container { max-width: 400px; margin: 0 auto; }
-        input, select, textarea { width: 100%; padding: 10px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background-color: var(--tg-theme-button-color, #3390ec); color: var(--tg-theme-button-text-color, #fff); border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #ccc; }
-        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; opacity: 0.6; }
-        .tab.active { opacity: 1; border-bottom: 3px solid var(--tg-theme-button-color, #3390ec); font-weight: bold; }
+        
+        label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; background: var(--tg-theme-secondary-bg-color, #f5f5f5); color: var(--tg-theme-text-color, #000); font-size: 16px; }
+        
+        button { width: 100%; padding: 16px; background-color: var(--tg-theme-button-color, #3390ec); color: var(--tg-theme-button-text-color, #fff); border: none; border-radius: 10px; cursor: pointer; font-size: 18px; font-weight: bold; margin-top: 25px; }
+        button:active { opacity: 0.8; }
+        
+        .tabs { display: flex; margin-bottom: 20px; border-bottom: 1px solid #ccc; }
+        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: var(--tg-theme-hint-color, #888); }
+        .tab.active { color: var(--tg-theme-button-color, #3390ec); border-bottom: 3px solid var(--tg-theme-button-color, #3390ec); font-weight: bold; }
         .hidden { display: none; }
+        
+        .hint { font-size: 12px; color: var(--tg-theme-hint-color, #888); margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -24,31 +31,28 @@
         </div>
 
         <div id="create-tab">
-            <h3>Посилання на YouTube:</h3>
-            <input type="text" id="urlInput" placeholder="https://youtu.be/..." />
+            <label>🔗 Посилання на YouTube:</label>
+            <input type="url" id="urlInput" placeholder="https://youtu.be/..." />
 
-            <h3>Кількість відео:</h3>
-            <select id="countInput">
-                <option value="1">1 відео</option>
-                <option value="3" selected>3 відео</option>
-                <option value="5">5 відео</option>
-            </select>
+            <label>🔢 Кількість відео:</label>
+            <input type="number" id="countInput" value="1" min="1" max="10" />
+            <div class="hint">Скільки шортсів зробити?</div>
 
-            <h3>Тривалість сегменту:</h3>
+            <label>⏱️ Тривалість одного відео:</label>
             <select id="durationInput">
                 <option value="auto">🤖 Авто (AI вирішує)</option>
-                <option value="15-30">⚡ Короткі (15-30 сек)</option>
+                <option value="15-30">⚡ Швидкі (15-30 сек)</option>
                 <option value="30-60" selected>Standard (30-60 сек)</option>
-                <option value="60-90">🐢 Довгі (до 90 сек)</option>
+                <option value="60-90">🐢 Довгі (60-90 сек)</option>
             </select>
 
-            <button onclick="sendData()">🚀 Запустити</button>
+            <button onclick="sendData()">🚀 Почати монтаж</button>
         </div>
 
         <div id="idea-tab" class="hidden">
-            <h3>Опиши свою ідею для відео:</h3>
-            <textarea id="ideaInput" rows="5" placeholder="Наприклад: Зроби відео про біткоїн..."></textarea>
-            <button onclick="sendIdea()">📩 Відправити ідею</button>
+            <label>✍️ Опиши ідею для відео:</label>
+            <textarea id="ideaInput" rows="5" placeholder="Хочу відео про..."></textarea>
+            <button onclick="sendIdea()">📩 Відправити</button>
         </div>
     </div>
 
@@ -71,12 +75,12 @@
         }
 
         function sendData() {
-            let url = document.getElementById("urlInput").value;
+            let url = document.getElementById("urlInput").value.trim();
             let count = document.getElementById("countInput").value;
             let duration = document.getElementById("durationInput").value;
 
             if (!url) {
-                tg.showPopup({title: 'Помилка', message: 'Введіть посилання!'});
+                tg.showAlert("❌ Будь ласка, вставте посилання на відео!");
                 return;
             }
 
@@ -84,14 +88,17 @@
                 action: "start_pipeline",
                 source: url,
                 count: parseInt(count),
-                duration: duration // Передаємо вибір часу
+                duration: duration
             };
             tg.sendData(JSON.stringify(data));
         }
 
         function sendIdea() {
-            let idea = document.getElementById("ideaInput").value;
-            if (!idea) return;
+            let idea = document.getElementById("ideaInput").value.trim();
+            if (!idea) {
+                tg.showAlert("❌ Напишіть хоч щось!");
+                return;
+            }
 
             let data = {
                 action: "submit_idea",
